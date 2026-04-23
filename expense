@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'pg'
+
+def field_max_size(result, field)
+  max_tuple = result.reduce do |a, b|
+    a[field].size > b[field].size ? a : b
+  end
+  max_tuple[field].size
+end
+
+db = PG.connect(dbname: 'expense')
+
+result = db.exec('SELECT * FROM expenses;')
+
+result.each do |tuple|
+  columns = [tuple['id'].rjust(field_max_size(result, 'id')),
+             tuple['created_on'].rjust(10),
+             tuple['amount'].rjust(12),
+             tuple['memo'].rjust(field_max_size(result, 'memo'))]
+
+  puts columns.join(' | ')
+end
+
+db.close
