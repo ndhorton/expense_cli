@@ -4,6 +4,7 @@
 
 require 'bundler/setup'
 require 'date'
+require 'io/console'
 require 'pg'
 
 # Responsibilities:
@@ -34,8 +35,14 @@ class ExpenseData
     end
   end
 
+  def delete_all_expenses
+    @connection.exec_params('DELETE FROM expenses;')
+    puts 'All expenses have been deleted.'
+  end
+
   def list_expenses
-    result = @connection.exec_params('SELECT * FROM expenses ORDER BY created_on ASC;')
+    sql = 'SELECT * FROM expenses ORDER BY created_on ASC;'
+    result = @connection.exec_params(sql)
 
     display_expenses(result)
   end
@@ -75,6 +82,10 @@ class CLI
       memo = arguments[1]
       abort('You must provide an amount and memo.') unless amount && memo
       @expense_data.add_expense(amount, memo)
+    when 'clear'
+      puts 'This will remove all expenses. Are you sure? (y/n)'
+      response = $stdin.getch
+      @expense_data.delete_all_expenses if response == 'y'
     when 'delete'
       @expense_data.delete_expense(arguments[0])
     when 'list'
